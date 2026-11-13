@@ -99,16 +99,18 @@
         showLevel();
         const chunks = [];
         let failed = false;
-        recorder = new MediaRecorder(stream);
-        recorder.ondataavailable = event => { if (event.data.size) chunks.push(event.data); };
-        recorder.onerror = event => {
+        const currentRecorder = new MediaRecorder(stream);
+        recorder = currentRecorder;
+        currentRecorder.ondataavailable = event => { if (event.data.size) chunks.push(event.data); };
+        currentRecorder.onerror = event => {
           failed = true;
+          recorder = null;
           status.textContent = '录制失败：' + event.error.name;
           reset();
         };
-        recorder.onstop = () => {
+        currentRecorder.onstop = () => {
           if (failed || leaving) return;
-          const clip = new Blob(chunks, { type: recorder.mimeType || chunks[0]?.type || 'video/webm' });
+          const clip = new Blob(chunks, { type: currentRecorder.mimeType || chunks[0]?.type || 'video/webm' });
           recorder = null;
           reset();
           if (!clip.size) { status.textContent = '片段为空，请重试。'; return; }
