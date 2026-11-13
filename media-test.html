@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Exam Guardian · 本地音视频演示</title>
+  <style>
+    body { font: 16px system-ui, sans-serif; margin: 32px auto; max-width: 720px; padding: 0 20px; background: #f5f7fb; color: #162444; }
+    video { width: 100%; max-height: 320px; background: #131b2a; border-radius: 8px; }
+    button, a { display: inline-block; margin: 4px 6px 4px 0; padding: 8px 12px; }
+    button { font: inherit; cursor: pointer; }
+    button:disabled { cursor: default; }
+    #status { min-height: 1.5em; }
+    #review[hidden], #download[hidden] { display: none; }
+  </style>
+</head>
+<body>
+  <h1>Exam Guardian 音视频演示</h1>
+  <p>点击后才请求摄像头和麦克风。最长录制 10 秒，片段留在本机供回放。</p>
+  <video id="preview" autoplay playsinline muted aria-label="摄像头预览"></video>
+  <p><label for="level">麦克风输入</label> <meter id="level" min="0" max="1" value="0"></meter></p>
+  <button id="record" type="button">录制音视频</button>
+  <button id="stop" type="button" disabled>停止录制</button>
+  <p id="status" role="status" aria-live="polite">等待开始</p>
+  <video id="review" controls playsinline hidden aria-label="录制回放"></video>
+  <a id="download" download hidden>保存片段</a>
+  <script>
+    const preview = document.querySelector('#preview');
+    const review = document.querySelector('#review');
+    const download = document.querySelector('#download');
+    const record = document.querySelector('#record');
+    const stop = document.querySelector('#stop');
+    const status = document.querySelector('#status');
+    const level = document.querySelector('#level');
+    let stream, recorder, audioContext, limit, meterTimer, clipUrl;
+    let active = false, leaving = false;
+
+    function releaseDevices() {
+      clearTimeout(limit);
+      clearInterval(meterTimer);
+      stream?.getTracks().forEach(track => track.stop());
+      stream = null;
+      preview.srcObject = null;
+      audioContext?.close().catch(() => {});
+      audioContext = null;
+      level.value = 0;
+    }
+
+    function reset() {
+      releaseDevices();
+      active = false;
+      record.disabled = false;
+      stop.disabled = true;
+    }
+
+    function clearClip() {
+      review.pause();
+      review.removeAttribute('src');
+      review.hidden = true;
+      download.hidden = true;
+      download.removeAttribute('href');
+      if (clipUrl) URL.revokeObjectURL(clipUrl);
+      clipUrl = null;
+    }
+
+    function finish() {
+      if (recorder?.state === 'recording') recorder.stop();
+      stop.disabled = true;
+      releaseDevices();
+    }
+
+    function showLevel() {
+      const analyser = audioContext.createAnalyser();
+      audioContext.createMediaStreamSource(stream).connect(analyser);
+      const samples = new Uint8Array(analyser.fftSize);
+      meterTimer = setInterval(() => {
+        analyser.getByteTimeDomainData(samples);
+        level.value = Math.sqrt(samples.reduce((sum, sample) => sum + ((sample - 128) / 128) ** 2, 0) / samples.length);
+      }, 100);
+    }
+
+    record.addEventListener('click', async () => {
+      if (active) return;
+      clearClip();
+      active = true;
+      record.disabled = true;
+      status.textContent = '等待设备授权…';
+      try {
+        if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+          throw new Error('当前浏览器或网址不支持录制');
+        }
+        audioContext = new AudioContext();
+        audioContext.resume().catch(() => {});
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: true, video: { width: { ideal: 640 }, height: { ideal: 360 }, frameRate: { ideal: 15, max: 20 } }
+        });
+        if (leaving) { reset(); return; }
+        preview.srcObject = stream;
+        showLevel();
+        const chunks = [];
+        let failed = false;
+        recorder = new MediaRecorder(stream);
+        recorder.ondataavailable = event => { if (event.data.size) chunks.push(event.data); };
+        recorder.onerror = event => {
+          failed = true;
+          status.textContent = '录制失败：' + event.error.name;
+          reset();
+        };
+        recorder.onstop = () => {
+          if (failed || leaving) return;
+          const clip = new Blob(chunks, { type: recorder.mimeType || chunks[0]?.type || 'video/webm' });
+          recorder = null;
+          reset();
+          if (!clip.size) { status.textContent = '片段为空，请重试。'; return; }
+          clipUrl = URL.createObjectURL(clip);
+          review.src = download.href = clipUrl;
+          download.download = 'exam-guardian-demo.' + (clip.type.includes('mp4') ? 'mp4' : 'webm');
+          download.hidden = review.hidden = false;
+          status.textContent = '设备已释放。可以回放或保存片段。';
+        };
+        recorder.start();
+        stop.disabled = false;
+        status.textContent = '正在录制，最多 10 秒。';
+        limit = setTimeout(finish, 10000);
+      } catch (error) {
+        reset();
+        status.textContent = '无法开始录制：' + error.name + ' · ' + error.message;
+      }
+    });
+    stop.addEventListener('click', finish);
+    window.addEventListener('pagehide', () => {
+      leaving = true;
+      finish();
+      clearClip();
+    });
+    window.addEventListener('pageshow', event => {
+      if (event.persisted) {
+        leaving = false;
+        reset();
+        status.textContent = '等待开始';
+      }
+    });
+  </script>
+</body>
+</html>
