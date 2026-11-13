@@ -64,9 +64,12 @@
     }
 
     function finish() {
-      if (recorder?.state === 'recording') recorder.stop();
       stop.disabled = true;
-      releaseDevices();
+      clearTimeout(limit);
+      if (recorder?.state === 'recording') {
+        recorder.stop();
+        status.textContent = '正在生成片段…';
+      }
     }
 
     function showLevel() {
@@ -99,7 +102,9 @@
         showLevel();
         const chunks = [];
         let failed = false;
-        const currentRecorder = new MediaRecorder(stream);
+        const webm = 'video/webm;codecs=vp8,opus';
+        const options = MediaRecorder.isTypeSupported(webm) ? { mimeType: webm } : undefined;
+        const currentRecorder = new MediaRecorder(stream, options);
         recorder = currentRecorder;
         currentRecorder.ondataavailable = event => { if (event.data.size) chunks.push(event.data); };
         currentRecorder.onerror = event => {
@@ -120,7 +125,7 @@
           download.hidden = review.hidden = false;
           status.textContent = '设备已释放。可以回放或保存片段。';
         };
-        recorder.start();
+        recorder.start(1000);
         stop.disabled = false;
         status.textContent = '正在录制，最多 10 秒。';
         limit = setTimeout(finish, 10000);
@@ -133,6 +138,7 @@
     window.addEventListener('pagehide', () => {
       leaving = true;
       finish();
+      releaseDevices();
       clearClip();
     });
     window.addEventListener('pageshow', event => {
