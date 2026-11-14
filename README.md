@@ -32,8 +32,9 @@ Moodle 加载 `local_examguardianmedia` 的 JavaScript，SEB 在打开作答页�
 | 服务器监控页面 | 演示测验已出现在 Running Exams；Moodle 教师入口实测自动登录并进入该测验的监控页 |
 | 音视频实验 | Edge 合成设备通过双轨采集、录制、回放、释放设备和 10 秒自动停止 |
 | 作答页脚本 | Moodle 教师预览中，面板出现在题目上方，Edge 合成设备验证了双轨采集和释放设备 |
-| Windows SEB 实机 | 客户端握手通过并取得演示测验配置。当前外接屏和内屏同时启用，单屏策略拦截了启动 |
-| 排练待确认 | 切换为仅内屏后，由测试学生在 Windows SEB 中打开同一份测验，验证真实摄像头、麦克风、答题提交和教师端会话 |
+| Windows SEB 实机 | 客户端握手通过并取得演示测验配置。仅在本地演示配置中允许两块屏幕后，SEB 通过显示检查并启动考试客户端 |
+| 当前阻塞 | 考试客户端检测到正在运行的 ToDesk，要求先结束该程序才能进入作答页。保留现有 ToDesk 进程，测试会话已经退出 |
+| 排练待确认 | 在 ToDesk 已退出的本机上，用测试学生在 Windows SEB 中打开同一份测验，验证真实摄像头、麦克风、答题提交和教师端会话 |
 
 Moodle 的内置 SEB 设置负责测验的客户端限制。SEB Server 官方插件通过 **Assessment Tool Setup**、**Assessment Tool Integration** 模板和 **Enable SEB Server** 串起自动导入、启动配置和教师监控。本次采用新的 **Exam Guardian Demo Connection**，解决旧配置解密失败后无法生成启动文件的问题。教师自动登录地址统一为 `http://localhost:8080`，与回跳地址使用同一个主机名。
 
