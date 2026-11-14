@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<XMLDB PATH="local/examguardianmedia/db" VERSION="20261114" COMMENT="Exam Guardian media storage"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd">
+  <TABLES>
+    <TABLE NAME="local_examguardianmedia_clip" COMMENT="Media and provenance for a quiz attempt">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="cmid" TYPE="int" LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="attemptid" TYPE="int" LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="clipkey" TYPE="char" LENGTH="36" NOTNULL="true"/>
+        <FIELD NAME="locationlabel" TYPE="char" LENGTH="120" NOTNULL="true"/>
+        <FIELD NAME="capturems" TYPE="int" LENGTH="15" NOTNULL="true"/>
+        <FIELD NAME="receivedms" TYPE="int" LENGTH="15" NOTNULL="true"/>
+        <FIELD NAME="durationms" TYPE="int" LENGTH="8" NOTNULL="true"/>
+        <FIELD NAME="sha256" TYPE="char" LENGTH="64" NOTNULL="true"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="attempt_clip" UNIQUE="true" FIELDS="attemptid,clipkey"/>
+        <INDEX NAME="quiz_received" UNIQUE="false" FIELDS="cmid,receivedms"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>

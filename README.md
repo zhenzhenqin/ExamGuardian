@@ -14,13 +14,22 @@
 
 1. 用测试学生账号在普通 Edge 打开 **Exam Guardian Demo - Live**。展示 **Start Safe Exam Browser** 和 **Download SEB Server configuration file**。下载配置或点击启动，再用测试账号进入 SEB，完成两道判断题并提交。
 2. 在 Moodle 教师端点击 **SEB Server monitoring**。浏览器会自动登录并打开这个测验的监控页。也可直接登录 SEB Server，在 **Running Exams** 选中测验。排练时确认正在作答的会话可见，提交后确认 Moodle 显示成绩。
-3. 学生在 Windows SEB 中开始作答后，在试题上方点击「开始测试」。移动一下面前的物体并说话，确认预览和麦克风电平都响应。停止或离开页面后会释放设备。采集面板最多预览 10 秒。另有[独立录制测试页](http://localhost:8081/exam-guardian-media.html)可用于单独排查录制和回放。
+3. 学生在 Windows SEB 中开始作答后，在试题上方点击「开始录制」。确认画面和麦克风电平都有响应，点击「停止」或等到 10 秒自动停止。看到「已保存片段 EG-…」后再翻页或交卷。教师预览只做设备检查。另有[独立录制测试页](http://localhost:8081/exam-guardian-media.html)。
 
 ## 作答页音视频
 
 Moodle 加载 `local_examguardianmedia` 的 JavaScript，SEB 在打开作答页时执行。插件只在配置的测验作答页显示面板。本机已安装插件并配置为 Moodle 活动 6。SEB Server 的 **Exam Guardian Media** 考试配置已关联到该测验，其中 **Browser → Media Playback/Capture** 提供摄像头和麦克风选项。
 
-在另一台实验环境部署时，将 `moodle-media` 的内容放入 Moodle 的 `local/examguardianmedia`，运行 `php admin/cli/upgrade.php --non-interactive`，用 `php admin/cli/cfg.php --component=local_examguardianmedia --name=cmid --set=6` 指定要测试的活动，按实际活动 ID 替换 6。
+在另一台实验环境部署时，将 `moodle-media` 的内容放入 Moodle 的 `local/examguardianmedia`，运行 `php admin/cli/upgrade.php --non-interactive`，用 `php admin/cli/cfg.php --component=local_examguardianmedia --name=cmid --set=6` 指定要测试的活动，按实际活动 ID 替换 6。用 `php admin/cli/cfg.php --component=local_examguardianmedia --name=locationlabel --set='本机演示考场'` 配置考场标签。
+
+## 回查采集素材
+
+有该测验报告权限的老师可从测验页底部的「查看本场音视频片段」或[音视频管理页](http://localhost:8081/local/examguardianmedia/index.php?cmid=6)查看。可按作答编号筛选，点击作答编号回到 Moodle 答卷，在页面中回放片段。
+
+- 每段以一份 WebM 保存摄像头画面和麦克风声音。每次作答最多 10 段，每段最多 8 MB。
+- 记录包括片段编号、测试学生、测验、作答编号、采集时间、服务器接收时间、时长、考场标签和 SHA-256。
+- 时间按北京时间显示到毫秒。采集时间来自设备时钟，接收时间来自 Moodle 服务器。地点由管理员预填，当前为「本机演示考场」，用于标记部署地点。
+- 11 月 14 日在 Windows SEB 实录 EG-1，关联作答 #3。已验证教师按作答编号找到片段、回放以及核对文件校验值，学生账号访问回放时被拒绝。
 
 ## 今晚复测
 
