@@ -1,0 +1,94 @@
+{% extends "evidence/base.html" %}
+{% load static %}
+{% block title %}作答 {{ session.attempt }} · Exam Guardian{% endblock %}
+{% block scripts %}<script src="{% static 'evidence/replay.js' %}" defer></script>{% endblock %}
+{% block content %}
+<a href="{% url 'review_list' %}">返回工作台</a>
+<h1>{{ session.exam.name }}</h1>
+<p class="muted">作答 {{ session.attempt }} · {{ session.source_site }} · {{ session.location }}</p>
+{% if exam_link %}<p><a href="{{ exam_link }}" target="_blank" rel="noopener">在 Moodle 查看答卷</a></p>{% endif %}
+<dl class="metrics">
+  <div><dt>证据状态</dt><dd>{{ session.get_state_display }}</dd></div>
+  <div><dt>双轨覆盖率</dt><dd>{{ coverage }}</dd></div>
+  <div><dt>覆盖时长 / 会话时长</dt><dd>{{ covered }} / {{ end }}</dd></div>
+</dl>
+<div class="review-grid">
+  <section class="card">
+    <h2>证据回放</h2>
+    {% if segments %}
+    <video controls preload="metadata" data-replay src="{{ segments.0.url }}"></video>
+    <p role="status" data-replay-status>片段 {{ segments.0.id }} · {{ segments.0.start }}</p>
+    <div class="table-box">
+      <table>
+        <thead><tr><th>片段</th><th>时间范围</th><th>完整性</th></tr></thead>
+        <tbody>{% for segment in segments %}
+          <tr><td><button class="link" type="button" data-play="{{ segment.url }}" data-label="片段 {{ segment.id }} · {{ segment.start }}">{{ segment.id }}</button></td>
+            <td>{{ segment.start }}–{{ segment.end }}</td><td><details><summary>SHA-256</summary><code>{{ segment.sha }}</code></details></td></tr>
+        {% endfor %}</tbody>
+      </table>
+    </div>
+    {% else %}<p>本次作答没有可播放的素材。</p>{% endif %}
+  </section>
+  <section class="card">
+    <h2>采集记录</h2>
+    <h3>可见缺口</h3>
+    <ul>{% for start, stop in gaps %}<li>{{ start }}–{{ stop }}</li>{% empty %}<li>暂无 ≥100 毫秒的缺口。</li>{% endfor %}</ul>
+    <h3>设备和传输状态</h3>
+    <ul>{% for at, label in events %}<li>{{ at }} · {{ label }}</li>{% empty %}<li>暂无状态记录。</li>{% endfor %}</ul>
+    {% if session.started_at %}<p class="muted">服务端会话开始 {{ session.started_at|date:"Y-m-d H:i:s" }}</p>{% endif %}
+  </section>
+</div>
+<section class="card">
+  <div class="section-head"><h2>分析记录</h2>
+  {% if user.is_superuser and segments and session.ended_at %}
+    <form class="row" method="post" action="{% url 'queue_analysis' session.id %}">
+      {% csrf_token %}
+      <select name="vision" aria-label="人脸检测工具"><option value="mediapipe">MediaPipe</option><option value="haar">OpenCV Haar</option></select>
+      <button type="submit">安排分析</button>
+    </form>
+  {% endif %}</div>
+  {% if jobs %}
+    <ul class="job-list">{% for job in jobs %}
+      <li><a href="?job={{ job.id }}">记录 {{ job.id }}</a> · {{ job.vision }} · {{ job.get_state_display }}{% if job.error %} · {{ job.error }}{% endif %}</li>
+    {% endfor %}</ul>
+  {% endif %}
+  {% if selected %}
+    <p>规则 {{ selected.rule_version }} · 复核优先级 {{ selected.priority }} · {{ selected.observations.count }} 条观察</p>
+    {% if selected.versions %}<details><summary>工具版本</summary><code>{{ selected.versions }}</code></details>{% endif %}
+    <ul>{% for flag in flags %}
+      <li><button class="link" type="button" data-play="{{ flag.url }}" data-offset="{{ flag.offset }}" data-label="片段 {{ flag.segment }} · {{ flag.start }}">{{ flag.start }}–{{ flag.end }}</button>
+        {{ flag.reason }} · 权重 {{ flag.priority }}</li>
+    {% empty %}<li>该分析记录暂无需要复核的标记。</li>{% endfor %}</ul>
+  {% else %}<p>暂无分析结果。</p>{% endif %}
+</section>
+<section class="card">
+  <h2>人工复核</h2>
+  {% if can_review or can_comment %}
+  <form method="post" class="note" id="review-form">
+    {% csrf_token %}
+    <label for="decision">处理意见</label>
+    <select name="decision" id="decision">
+      {% if can_review %}
+      <option value="explained">有合理解释</option>
+      <option value="follow_up">需要进一步复核</option>
+      <option value="inconclusive">证据不足</option>
+      {% endif %}
+      {% if can_comment %}<option value="comment">评审评论</option>{% endif %}
+    </select>
+    <label for="note">说明</label>
+    <textarea id="note" name="note" rows="3" required maxlength="2000"></textarea>
+    <input type="hidden" name="revision" id="revision">
+    <button type="submit">保存意见</button>
+  </form>
+  {% endif %}
+  <ol class="history">{% for entry in entries %}
+    <li><strong>{{ entry.get_decision_display }}</strong> · {{ entry.author.username }} · {{ entry.created_at|date:"m-d H:i" }} · #{{ entry.id }}
+      {% if entry.supersedes_id %} · 修订 #{{ entry.supersedes_id }}{% endif %}
+      <p>{{ entry.note|linebreaksbr }}</p>
+      {% if entry.author_id == user.id %}
+      <button type="button" class="link" data-revise="{{ entry.id }}" data-decision="{{ entry.decision }}" data-note="{{ entry.note }}">新建修订</button>
+      {% endif %}
+    </li>
+  {% empty %}<li>暂无复核意见。</li>{% endfor %}</ol>
+</section>
+{% endblock %}

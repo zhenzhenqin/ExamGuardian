@@ -1,0 +1,13 @@
+{% extends "evidence/base.html" %}
+{% block title %}登录 · Exam Guardian{% endblock %}
+{% block content %}
+<section class="card narrow">
+  <h1>登录证据工作台</h1>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input type="hidden" name="next" value="{{ next }}">
+    <button type="submit">登录</button>
+  </form>
+</section>
+{% endblock %}

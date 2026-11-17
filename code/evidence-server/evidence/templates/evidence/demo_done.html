@@ -1,0 +1,8 @@
+{% extends "evidence/base.html" %}
+{% block content %}
+<section class="card narrow">
+  <h1>练习已提交</h1>
+  {% if session %}<p>作答 {{ session.attempt }} · {{ session.get_state_display }}</p>{% endif %}
+  <a href="{% url 'demo' %}">开始新作答</a>
+</section>
+{% endblock %}

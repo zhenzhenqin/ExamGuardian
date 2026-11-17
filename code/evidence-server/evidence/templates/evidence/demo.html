@@ -1,0 +1,29 @@
+{% extends "evidence/base.html" %}
+{% block title %}独立采集练习 · Exam Guardian{% endblock %}
+{% block scripts %}<script src="{% url 'demo_script' %}" defer></script>{% endblock %}
+{% block content %}
+<h1>独立采集练习</h1>
+<p class="muted">独立测试环境 · 作答 {{ attempt }} · 第 {{ page }} / 2 页</p>
+<section class="card" data-eg-capture data-session-url="{% url 'demo_session' %}" data-csrf-name="csrfmiddlewaretoken" data-attempt="{{ attempt }}">
+  <h2>摄像头和麦克风</h2>
+  <p>同意后，设备音视频将分段保存，供授权复核人员查看。测试素材按配置到期删除。你可以暂停或拒绝录制并继续答题。</p>
+  <form hidden>{% csrf_token %}</form>
+  <div class="row">
+    <button type="button" data-eg-start>同意并开始录制</button>
+    <button type="button" class="quiet" data-eg-stop disabled>暂停录制</button>
+    <button type="button" class="quiet" data-eg-decline>拒绝采集</button>
+  </div>
+  <video data-eg-preview width="320" height="180" autoplay muted playsinline hidden></video>
+  <p role="status" data-eg-status>等待选择。</p>
+</section>
+<section class="card">
+  <h2>第 {{ page }} 题</h2>
+  <p>{% if page == 1 %}同一次作答可以关联多个音视频片段。{% else %}证据回放需要经过授权。{% endif %}</p>
+  <label><input type="radio" name="practice">正确</label>
+  <label><input type="radio" name="practice">错误</label>
+  <div class="row actions">
+    {% if page == 1 %}<a href="?page=2">下一页</a>{% else %}<a href="?page=1">上一页</a>{% endif %}
+    <form method="post" action="{% url 'demo_end' %}">{% csrf_token %}<button type="submit">交卷</button></form>
+  </div>
+</section>
+{% endblock %}
