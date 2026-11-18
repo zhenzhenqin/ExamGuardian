@@ -21,6 +21,8 @@
 
 既有 SEB 测验在本机 Chromium 仍显示 SEB 启动控件，没有开放普通浏览器的答题入口。Moodle、SEB Server 的本机入口均返回 HTTP 200。
 
+复核员登录了连接 MariaDB 的证据应用，打开已分配的 Moodle 作答。浏览器成功加载源片段，按 32 字节 Range 请求收到 HTTP 206。本场证据页显示对应 Moodle 答卷链接，提交意见后重新加载可查。
+
 ## 分析组件冒烟测试
 
 MediaPipe 与 OpenCV Haar 均成功分析一场已归档的 Moodle 合成录制作答，两个任务各生成关联到证据的复核标记，总优先级均为 2。合成语音经本地编码进入 VAD，共得到 3 段语音区间、11.280 秒活动时长。对照用的合成连续纯音在开头产生约 80 毫秒活动，短于当前默认 3 秒阈值。实际论文指标以团队标注素材为准。[分析工具和评估命令](README.md#复现检查) · [OpenCV 模型来源](https://github.com/opencv/opencv/blob/4.13.0/data/haarcascades/haarcascade_frontalface_default.xml)
