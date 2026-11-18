@@ -1,6 +1,12 @@
 <?php
 require_once(__DIR__ . '/../../config.php');
 
+if (!in_array($_SERVER['REQUEST_METHOD'], ['GET', 'HEAD'], true)) {
+    header('Allow: GET, HEAD');
+    http_response_code(405);
+    exit;
+}
+
 $cmid = required_param('cmid', PARAM_INT);
 $attemptid = optional_param('attempt', 0, PARAM_INT);
 $page = max(0, optional_param('page', 0, PARAM_INT));

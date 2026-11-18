@@ -1,5 +1,5 @@
 <?php
-// Create two test users and an ordinary-browser quiz alongside the existing lab quiz.
+// Create two students, a teacher, and an ordinary-browser quiz in the lab course.
 // Run only on a lab Moodle, with Moodle root and local output file as arguments.
 define('CLI_SCRIPT', true);
 if ($argc !== 4 || !ctype_digit($argv[2]) || !str_starts_with($argv[3], '/')) {
@@ -67,22 +67,24 @@ $manual = array_filter(enrol_get_instances($course->id, true), static fn($entry)
 if (!$manual) {
     throw new RuntimeException('Lab course requires manual enrolments.');
 }
-$role = $DB->get_field('role', 'id', ['shortname' => 'student'], MUST_EXIST);
-$students = [];
-for ($index = 1; $index <= 2; $index++) {
-    $username = 'egfixture' . $index . bin2hex(random_bytes(4));
+$enrolment = reset($manual);
+$createfixtureuser = static function (string $role, string $label) use ($CFG, $DB, $enrolment): array {
+    $roleid = $DB->get_field('role', 'id', ['shortname' => $role], MUST_EXIST);
+    $username = 'egfixture' . bin2hex(random_bytes(6));
     $password = 'Eg!' . bin2hex(random_bytes(14));
     $id = user_create_user((object) [
-        'username' => $username, 'firstname' => 'Evidence', 'lastname' => 'Fixture ' . $index,
+        'username' => $username, 'firstname' => 'Evidence', 'lastname' => 'Fixture ' . $label,
         'email' => $username . '@example.invalid', 'password' => $password,
         'auth' => 'manual', 'confirmed' => 1, 'mnethostid' => $CFG->mnet_localhost_id,
     ]);
-    enrol_get_plugin('manual')->enrol_user(reset($manual), $id, $role);
-    $students[] = ['username' => $username, 'password' => $password];
-}
+    enrol_get_plugin('manual')->enrol_user($enrolment, $id, $roleid);
+    return ['username' => $username, 'password' => $password];
+};
+$students = [$createfixtureuser('student', 'Student A'), $createfixtureuser('student', 'Student B')];
+$teacher = $createfixtureuser('editingteacher', 'Teacher');
 umask(0077);
 if (file_put_contents($argv[3], json_encode([
-    'cmid' => (int) $module->coursemodule, 'quizId' => (int) $created->id, 'students' => $students,
+    'cmid' => (int) $module->coursemodule, 'quizId' => (int) $created->id, 'students' => $students, 'teacher' => $teacher,
 ], JSON_THROW_ON_ERROR), LOCK_EX) === false) {
     throw new RuntimeException('Could not write the local fixture credentials.');
 }

@@ -7,6 +7,7 @@
 - [原版 Moodle 与 SEB 演示](code/lab/README.md)
 - [证据应用部署和测试](code/evidence-server/README.md)
 - [验收记录](code/evidence-server/ACCEPTANCE.md)
+- [接口与功能测试报告](code/evidence-server/INTERFACE_TEST_REPORT.md)
 - [迭代记录](CHANGELOG.md)
 - [开发和提交方式](CONTRIBUTING.md)
 

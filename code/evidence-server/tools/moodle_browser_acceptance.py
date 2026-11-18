@@ -25,10 +25,14 @@ def login(browser, base, student):
     return page
 
 
-def start(page, base, cmid):
+def start_attempt(page, base, cmid):
     page.goto(f"{base}/mod/quiz/view.php?id={cmid}")
     page.locator(".quizstartbuttondiv [type=submit]").click()
     page.wait_for_url(re.compile(r"/mod/quiz/attempt.php"))
+
+
+def start(page, base, cmid):
+    start_attempt(page, base, cmid)
     panel = page.locator("[data-eg-capture]")
     expect(panel).to_be_visible()
     return panel
@@ -59,7 +63,14 @@ def record(page, panel, *, navigate=False):
             records.append(response.status)
 
     page.on("response", response_seen)
-    panel.locator("[data-eg-start]").click()
+    with page.expect_response(lambda resp: resp.url.endswith("/local/examguardianmedia/session.php") and resp.ok) as registered:
+        panel.locator("[data-eg-start]").click()
+    grant = registered.value.json()
+    status_url = page.url.split("/mod/quiz/", 1)[0] + grant["statusUrl"]
+    assert page.request.get(status_url).status == 403
+    status_headers = {"Authorization": "Bearer " + grant["token"]}
+    status = page.request.get(status_url, headers=status_headers)
+    assert status.ok and status.json()["state"] == "active"
     expect(panel.locator("[data-eg-preview]")).to_be_visible(timeout=18000)
     page.wait_for_timeout(11000)
     expect(panel.locator("[data-eg-status]")).to_contain_text(re.compile(r"已确认 [1-9]"), timeout=15000)
@@ -91,13 +102,25 @@ def run(args):
         b = start(second, args.base, fixture["cmid"])
         attempt_a = a.get_attribute("data-attempt")
         attempt_b = b.get_attribute("data-attempt")
+        registration = f"{args.base}/local/examguardianmedia/session.php"
+        public = browser.new_context()
+        assert public.request.get(registration).status == 405
+        assert public.request.post(registration, form={"attempt": attempt_a, "consent": 1}).status == 403
+        public.close()
+        assert first.request.post(registration, form={"attempt": attempt_a, "consent": 1}).status == 403
         cross = second.request.post(
-            f"{args.base}/local/examguardianmedia/session.php", form={
+            registration, form={
                 "attempt": attempt_a, "sesskey": b.get_attribute("data-csrf-value"), "consent": "1",
             },
         )
         assert cross.status == 403, cross.status
+        sesskey_a = a.get_attribute("data-csrf-value")
+        for value in (9, "1draft", ""):
+            invalid = first.request.post(registration, form={"attempt": attempt_a, "sesskey": sesskey_a, "consent": value})
+            assert invalid.status == 403, (value, invalid.status)
         clips_a = record(first, a, navigate=True)
+        finished = first.request.post(registration, form={"attempt": attempt_a, "sesskey": sesskey_a, "consent": 1})
+        assert finished.status == 403
         print(f"Moodle attempt {attempt_a}: {clips_a} acknowledged clips, submitted.", flush=True)
         clips_b = record(second, b)
         print(f"Moodle attempt {attempt_b}: {clips_b} acknowledged clips, submitted.", flush=True)
@@ -111,7 +134,8 @@ def run(args):
         report = {"source": "Moodle lab quiz via Chromium with test-only synthetic tracks",
                   "browser": browser.version, "cmid": fixture["cmid"], "quiz_id": fixture["quizId"],
                   "finished": [attempt_a, attempt_b, attempt_again], "clipAcknowledgements": [clips_a, clips_b],
-                  "moodleCrossAccountDenied": True, "declinedAttempt": attempt_again}
+                  "moodleCrossAccountDenied": True, "declinedAttempt": attempt_again,
+                  "sessionMethodAnonymousCsrfAndFinishedChecked": True, "proxyStatusAuthorization": True}
         Path(args.output).write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         print(json.dumps(report, ensure_ascii=False), flush=True)
         browser.close()

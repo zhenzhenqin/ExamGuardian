@@ -13,15 +13,17 @@ function eg_session_reply(int $status, array $data): never {
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header('Allow: POST');
     eg_session_reply(405, ['error' => '请从作答页启动录制。']);
 }
-if (!isloggedin() || isguestuser() || !confirm_sesskey()) {
+$requestkey = optional_param('sesskey', '', PARAM_RAW);
+if (!isloggedin() || isguestuser() || !$requestkey || !confirm_sesskey($requestkey)) {
     eg_session_reply(403, ['error' => '登录已失效，请返回作答页。']);
 }
 $id = optional_param('attempt', 0, PARAM_INT);
-$consent = optional_param('consent', -1, PARAM_INT);
+$consent = optional_param('consent', '', PARAM_RAW);
 $record = $DB->get_record('quiz_attempts', ['id' => $id, 'userid' => $USER->id]);
-if (!$record || !in_array($consent, [0, 1], true) || $record->preview ||
+if (!$record || !in_array($consent, ['0', '1'], true) || $record->preview ||
         $record->state !== quiz_attempt::IN_PROGRESS) {
     eg_session_reply(403, ['error' => '该作答未启用证据采集。']);
 }

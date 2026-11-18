@@ -16,7 +16,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Allow: POST');
     clip_response(405, ['error' => '请使用录制面板保存。']);
 }
-if (!isloggedin() || isguestuser() || !confirm_sesskey()) {
+$requestkey = optional_param('sesskey', '', PARAM_RAW);
+if (!isloggedin() || isguestuser() || !$requestkey || !confirm_sesskey($requestkey)) {
     clip_response(403, ['error' => '登录已失效，请重新进入测验。']);
 }
 
@@ -32,6 +33,9 @@ $context = $attempt->get_context();
 if ((int) $attempt->get_cm()->id !== $cmid || $attempt->is_preview() ||
         !has_capability('mod/quiz:attempt', $context)) {
     clip_response(403, ['error' => '这份答题记录未启用采集。']);
+}
+if (\local_examguardianmedia\evidence_client::enabled_for($cmid)) {
+    clip_response(403, ['error' => '该测验已改用新版采集。请从作答页保存片段。']);
 }
 
 $key = optional_param('clipkey', '', PARAM_ALPHANUMEXT);

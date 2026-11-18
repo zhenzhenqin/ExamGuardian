@@ -25,6 +25,7 @@ EVENT_LABELS = {
 }
 
 
+@require_GET
 def home(request):
     if request.user.is_authenticated or not settings.EG_ENABLE_STANDALONE:
         return redirect("review_list")
@@ -80,8 +81,11 @@ def demo_session(request):
 @transaction.atomic
 def demo_end(request):
     student = student_demo(request)
+    attempt = request.session.get("attempt")
+    if not attempt:
+        return error("请从练习页面打开作答。", 403)
     session = Session.objects.select_for_update().filter(source_site="standalone",
-        attempt=request.session.get("attempt"), student_ref=student).first()
+        attempt=attempt, student_ref=student).first()
     if session:
         finish(session, timezone.now())
     request.session.pop("attempt", None)
@@ -136,7 +140,8 @@ def review_detail(request, session_id):
             session = get_object_or_404(sessions.select_for_update(), pk=session_id)
             older = None
             if revision := request.POST.get("revision"):
-                if not revision.isascii() or not revision.isdecimal() or len(revision) > 19:
+                if (not revision.isascii() or not revision.isdecimal() or len(revision) > 19
+                        or not 0 < int(revision) < 2**63):
                     return HttpResponse("无效的意见编号。", status=400)
                 older = get_object_or_404(session.entries, pk=int(revision), author=request.user)
                 if (older.decision == ReviewEntry.Decision.COMMENT) != (decision == ReviewEntry.Decision.COMMENT):

@@ -8,6 +8,7 @@ from django.core import signing
 from django.db import OperationalError, transaction
 from django.http import JsonResponse
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.crypto import constant_time_compare
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
@@ -125,10 +126,10 @@ def student(function):
             return error("会话凭证失效。", 403)
         if value != str(session_id):
             return error("该凭证不属于当前作答。", 403)
-        session = Session.objects.filter(pk=session_id, started_at__isnull=False).exclude(state=Session.State.PURGING).first()
-        if not session:
-            return error("找不到该采集会话。", 404)
         try:
+            session = Session.objects.filter(pk=session_id, started_at__isnull=False).exclude(state=Session.State.PURGING).first()
+            if not session:
+                return error("找不到该采集会话。", 404)
             return function(request, session)
         except (ValueError, TypeError, KeyError, OverflowError):
             return error("采集请求参数无效。")
@@ -170,15 +171,26 @@ def segment(request, session):
 @student
 def event(request, session):
     body = json_data(request)
-    key, code = UUID(body["key"]), body["code"]
-    if code not in EVENT_CODES:
+    code = body["code"]
+    if not isinstance(code, str) or code not in EVENT_CODES:
         return error("不支持的采集状态。")
+    key = UUID(str(body["key"]))
     with transaction.atomic():
-        session = Session.objects.select_for_update().get(pk=session.pk)
-        if session.state not in [Session.State.ACTIVE, Session.State.CLOSING]:
+        session = Session.objects.select_for_update().filter(pk=session.pk).first()
+        if session is None:
+            return error("找不到该采集会话。", 404)
+        now = timezone.now()
+        if (session.state not in [Session.State.ACTIVE, Session.State.CLOSING]
+                or (session.close_after and session.close_after <= now)):
             return error("该作答已结束接收。", 409)
-        at = checked_int(body["atMs"], maximum=min(elapsed(session) + 2000, settings.EG_MAX_SESSION_SECONDS * 1000))
-        if session.events.count() >= 300 and not session.events.filter(key=key).exists():
+        limit = min(elapsed(session, now) + 2000, settings.EG_MAX_SESSION_SECONDS * 1000)
+        at = checked_int(body["atMs"], maximum=limit)
+        existing = session.events.filter(key=key).first()
+        if existing:
+            if existing.code != code or existing.at_ms != at:
+                return error("该采集状态编号已被不同的事件使用。", 409)
+            return reply({"ok": True})
+        if session.events.count() >= 300:
             return error("采集状态记录已达上限。", 413)
-        CaptureEvent.objects.get_or_create(session=session, key=key, defaults={"code": code, "at_ms": at})
+        CaptureEvent.objects.create(session=session, key=key, code=code, at_ms=at)
     return reply({"ok": True})
