@@ -5,12 +5,14 @@ final class attempt_panel {
     public static function add_panel(\core\hook\output\before_footer_html_generation $hook): void {
         global $PAGE, $USER;
 
-        $cmid = (int) get_config('local_examguardianmedia', 'cmid');
-        if (!$cmid || (int) ($PAGE->cm->id ?? 0) !== $cmid) {
+        $cmid = (int) ($PAGE->cm->id ?? 0);
+        $legacy = $cmid && $cmid === (int) get_config('local_examguardianmedia', 'cmid');
+        $modern = evidence_client::enabled_for($cmid);
+        if (!$legacy && !$modern) {
             return;
         }
 
-        if ($PAGE->pagetype === 'mod-quiz-view' && has_capability('mod/quiz:viewreports', $PAGE->context)) {
+        if ($legacy && $PAGE->pagetype === 'mod-quiz-view' && has_capability('mod/quiz:viewreports', $PAGE->context)) {
             $url = new \moodle_url('/local/examguardianmedia/index.php', ['cmid' => $cmid]);
             $hook->add_html(\html_writer::div(\html_writer::link($url, '查看本场音视频片段'), 'my-3'));
         }
@@ -20,12 +22,12 @@ final class attempt_panel {
 
         $attempt = $PAGE->url->param('attempt');
         $location = trim((string) get_config('local_examguardianmedia', 'locationlabel'));
-        if (!$attempt || !$location) {
+        if (!$attempt || (!$location && !$modern)) {
             return;
         }
 
         $collection = !has_capability('mod/quiz:preview', $PAGE->context, $USER);
-        if ($collection && evidence_client::configured()) {
+        if ($collection && $modern) {
             self::add_evidence_panel($hook, (int) $attempt);
             return;
         }

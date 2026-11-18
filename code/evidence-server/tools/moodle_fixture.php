@@ -2,8 +2,8 @@
 // Create two test users and an ordinary-browser quiz alongside the existing lab quiz.
 // Run only on a lab Moodle, with Moodle root and local output file as arguments.
 define('CLI_SCRIPT', true);
-if ($argc !== 4 || !ctype_digit($argv[2])) {
-    fwrite(STDERR, "Usage: php moodle_fixture.php MOODLE_ROOT SOURCE_CMID LOCAL_JSON\n");
+if ($argc !== 4 || !ctype_digit($argv[2]) || !str_starts_with($argv[3], '/')) {
+    fwrite(STDERR, "Usage: php moodle_fixture.php MOODLE_ROOT SOURCE_CMID ABSOLUTE_LOCAL_JSON\n");
     exit(2);
 }
 require $argv[1] . '/config.php';
@@ -80,11 +80,11 @@ for ($index = 1; $index <= 2; $index++) {
     enrol_get_plugin('manual')->enrol_user(reset($manual), $id, $role);
     $students[] = ['username' => $username, 'password' => $password];
 }
-$tx->allow_commit();
 umask(0077);
 if (file_put_contents($argv[3], json_encode([
     'cmid' => (int) $module->coursemodule, 'quizId' => (int) $created->id, 'students' => $students,
 ], JSON_THROW_ON_ERROR), LOCK_EX) === false) {
     throw new RuntimeException('Could not write the local fixture credentials.');
 }
+$tx->allow_commit();
 echo 'Created loopback lab quiz for integration tests. Keep the credential file local.' . PHP_EOL;

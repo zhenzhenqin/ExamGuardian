@@ -70,7 +70,9 @@ def store_segment(session_id, key, start, claimed_end, device, uploaded):
         digest = sha.hexdigest()
         duration = probe(temporary)
         with transaction.atomic():
-            session = Session.objects.select_for_update().get(pk=session_id)
+            session = Session.objects.select_for_update().filter(pk=session_id).first()
+            if session is None:
+                raise UploadError("该作答已删除。", 410)
             existing = session.segments.filter(key=key).first()
             if existing:
                 if existing.sha256 != digest or existing.start_ms != start:

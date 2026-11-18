@@ -92,6 +92,7 @@ EG_UPLOAD_GRACE_SECONDS = 120
 EG_SEGMENT_MS = 5000
 EG_CAPTURE_SCRIPT = Path(os.getenv("EG_CAPTURE_SCRIPT", BASE_DIR.parent / "lab/moodle-media/capture.js"))
 EG_FACE_MODEL = Path(os.getenv("EG_FACE_MODEL", BASE_DIR / "var" / "models" / "blaze_face_short_range.tflite"))
+EG_HAAR_MODEL = Path(os.getenv("EG_HAAR_MODEL", BASE_DIR / "var" / "models" / "haarcascade_frontalface_default.xml"))
 FILE_UPLOAD_MAX_MEMORY_SIZE = 512 * 1024
 DATA_UPLOAD_MAX_MEMORY_SIZE = 256 * 1024
 DATA_UPLOAD_MAX_NUMBER_FILES = 1

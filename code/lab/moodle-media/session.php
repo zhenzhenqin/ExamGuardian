@@ -20,16 +20,16 @@ if (!isloggedin() || isguestuser() || !confirm_sesskey()) {
 }
 $id = optional_param('attempt', 0, PARAM_INT);
 $consent = optional_param('consent', -1, PARAM_INT);
-$cmid = (int) get_config('local_examguardianmedia', 'cmid');
 $record = $DB->get_record('quiz_attempts', ['id' => $id, 'userid' => $USER->id]);
-if (!$record || !$cmid || !in_array($consent, [0, 1], true) || $record->preview ||
-        $record->state !== quiz_attempt::IN_PROGRESS || !evidence_client::configured()) {
+if (!$record || !in_array($consent, [0, 1], true) || $record->preview ||
+        $record->state !== quiz_attempt::IN_PROGRESS) {
     eg_session_reply(403, ['error' => '该作答未启用证据采集。']);
 }
 
 try {
     $attempt = quiz_attempt::create($id);
-    if ((int) $attempt->get_cm()->id !== $cmid || !has_capability('mod/quiz:attempt', $attempt->get_context())) {
+    $cmid = (int) $attempt->get_cm()->id;
+    if (!evidence_client::enabled_for($cmid) || !has_capability('mod/quiz:attempt', $attempt->get_context())) {
         eg_session_reply(403, ['error' => '该作答未启用证据采集。']);
     }
     $student = hash_hmac('sha256', $CFG->wwwroot . ':' . $USER->id, $CFG->passwordsaltmain ??

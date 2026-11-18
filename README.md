@@ -6,6 +6,7 @@
 - [毕设实施方案](Exam%20Guardian%20毕设详细实施方案.md)
 - [原版 Moodle 与 SEB 演示](code/lab/README.md)
 - [证据应用部署和测试](code/evidence-server/README.md)
+- [验收记录](code/evidence-server/ACCEPTANCE.md)
 - [迭代记录](CHANGELOG.md)
 - [开发和提交方式](CONTRIBUTING.md)
 

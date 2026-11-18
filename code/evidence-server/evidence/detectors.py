@@ -1,5 +1,6 @@
 import hashlib
 from importlib import metadata
+from pathlib import Path
 
 import av
 from django.conf import settings
@@ -12,11 +13,22 @@ class Faces:
             import cv2
 
             self.cv2 = cv2
-            path = cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
-            self.detector = cv2.CascadeClassifier(path)
-            if self.detector.empty():
+            path = settings.EG_HAAR_MODEL
+            if not path.is_file():
+                path = Path(cv2.data.haarcascades, "haarcascade_frontalface_default.xml")
+            if not path.is_file():
+                raise ValueError("OpenCV model missing. Run fetch_face_model.")
+            xml = path.read_text(encoding="utf-8")
+            self.detector = cv2.CascadeClassifier()
+            storage = cv2.FileStorage(xml, cv2.FILE_STORAGE_READ | cv2.FILE_STORAGE_MEMORY)
+            try:
+                loaded = storage.isOpened() and self.detector.read(storage.getFirstTopLevelNode())
+            finally:
+                storage.release()
+            if not loaded or self.detector.empty():
                 raise ValueError("OpenCV classifier missing.")
-            self.version = {"opencv": cv2.__version__, "model": "haarcascade_frontalface_default"}
+            self.version = {"opencv": cv2.__version__, "model": "haarcascade_frontalface_default",
+                            "modelSha256": hashlib.sha256(path.read_bytes()).hexdigest()}
         else:
             import mediapipe as mp
             from mediapipe.tasks import python
@@ -26,12 +38,13 @@ class Faces:
             model = settings.EG_FACE_MODEL
             if not model.is_file():
                 raise ValueError("MediaPipe model missing. Run fetch_face_model.")
+            model_data = model.read_bytes()
             self.detector = vision.FaceDetector.create_from_options(vision.FaceDetectorOptions(
-                base_options=python.BaseOptions(model_asset_path=str(model)),
+                base_options=python.BaseOptions(model_asset_buffer=model_data),
                 running_mode=vision.RunningMode.IMAGE,
                 min_detection_confidence=0.5,
             ))
-            self.version = {"mediapipe": mp.__version__, "modelSha256": hashlib.sha256(model.read_bytes()).hexdigest()}
+            self.version = {"mediapipe": mp.__version__, "modelSha256": hashlib.sha256(model_data).hexdigest()}
 
     def close(self):
         if self.method != "haar":
@@ -45,13 +58,13 @@ class Faces:
         return len(self.detector.detect(image).detections)
 
 
-def intervals(samples, interval, duration):
+def intervals(samples, interval, duration, *, jitter=20):
     previous = None
     for start, kind in samples:
         if start >= duration:
             break
         end = min(duration, start + interval)
-        if previous and previous[0] == kind and start - previous[2] <= 20:
+        if previous and previous[0] == kind and start - previous[2] <= jitter:
             previous = (kind, previous[1], end)
         else:
             if previous and previous[0]:
@@ -97,7 +110,7 @@ def audio_samples(path):
 
 
 def analyze_segment(path, faces, duration):
-    results = list(intervals(video_samples(path, faces), 500, duration))
+    results = list(intervals(video_samples(path, faces), 500, duration, jitter=100))
     if not results:
         raise ValueError("Video frames could not be decoded.")
     results.extend(intervals(audio_samples(path), 20, duration))

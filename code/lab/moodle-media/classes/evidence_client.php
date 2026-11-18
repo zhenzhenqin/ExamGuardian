@@ -9,6 +9,17 @@ final class evidence_client {
             (bool) get_config('local_examguardianmedia', 'evidencesecret');
     }
 
+    public static function enabled_for(int $cmid): bool {
+        if (!$cmid || !self::configured()) {
+            return false;
+        }
+        $configured = trim((string) get_config('local_examguardianmedia', 'evidencecmids'));
+        if ($configured === '') {
+            return $cmid === (int) get_config('local_examguardianmedia', 'cmid');
+        }
+        return in_array((string) $cmid, array_map('trim', explode(',', $configured)), true);
+    }
+
     public static function request(string $action, array $data): array {
         $base = rtrim((string) get_config('local_examguardianmedia', 'evidenceurl'), '/');
         $secret = (string) get_config('local_examguardianmedia', 'evidencesecret');

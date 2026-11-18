@@ -40,7 +40,7 @@
 </div>
 <section class="card">
   <div class="section-head"><h2>分析记录</h2>
-  {% if user.is_superuser and segments and session.ended_at %}
+  {% if can_queue_analysis %}
     <form class="row" method="post" action="{% url 'queue_analysis' session.id %}">
       {% csrf_token %}
       <select name="vision" aria-label="人脸检测工具"><option value="mediapipe">MediaPipe</option><option value="haar">OpenCV Haar</option></select>

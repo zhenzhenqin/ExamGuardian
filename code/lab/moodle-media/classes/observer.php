@@ -5,8 +5,7 @@ defined('MOODLE_INTERNAL') || die();
 
 final class observer {
     public static function attempt_ended(\core\event\base $event): void {
-        if (!evidence_client::configured() || (int) $event->contextinstanceid !==
-                (int) get_config('local_examguardianmedia', 'cmid')) {
+        if (!evidence_client::enabled_for((int) $event->contextinstanceid)) {
             return;
         }
         $task = new \local_examguardianmedia\task\finish_session();

@@ -15,6 +15,7 @@ from django.utils import timezone
 
 from .api import SALT
 from .management.commands.evidence_worker import analyze, claim, maintain
+from .management.commands.evaluate_evidence import score
 from .models import PANEL, REVIEWER, AnalysisJob, Assignment, Audit, Exam, ReviewEntry, Session
 from .services import coverage, create_job
 
@@ -195,3 +196,7 @@ class EvidenceAcceptance(TestCase):
         demo.get("/demo/")
         again = demo.post("/demo/session/", {"consent": "1", "csrfmiddlewaretoken": token})
         self.assertNotEqual(again.json()["sessionId"], response.json()["sessionId"])
+
+    def test_interval_scoring_uses_each_prediction_once(self):
+        score_result = score([(20000, 25000)], [(21000, 26000), (22000, 25000)])
+        self.assertEqual(score_result, {"tp": 1, "fp": 1, "fn": 0, "precision": 0.5, "recall": 1})

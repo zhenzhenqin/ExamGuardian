@@ -5,6 +5,8 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
+from django.db.models import OuterRef, Subquery
+from django.db.models.functions import Coalesce
 from django.http import FileResponse, Http404, HttpResponse, StreamingHttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -103,6 +105,10 @@ def time_label(ms):
 @require_GET
 def review_list(request):
     sessions = scope(request).exclude(state=Session.State.PURGING).select_related("exam")
+    latest = AnalysisJob.objects.filter(session_id=OuterRef("pk"), state=AnalysisJob.State.DONE).order_by("-created_at")
+    sessions = sessions.annotate(priority=Coalesce(Subquery(latest.values("priority")[:1]), 0)).order_by(
+        "-priority", "-created_at",
+    )
     attempt = request.GET.get("attempt", "").strip()[:80]
     if attempt:
         sessions = sessions.filter(attempt=attempt)
@@ -159,6 +165,7 @@ def review_detail(request, session_id):
         "events": [(time_label(e.at_ms), EVENT_LABELS.get(e.code, e.code)) for e in session.events.all()],
         "entries": session.entries.select_related("author").order_by("-created_at"),
         "can_review": can_review, "can_comment": can_comment or request.user.is_superuser,
+        "can_queue_analysis": request.user.is_superuser and bool(segments) and session.state in FINAL_STATES,
         "jobs": jobs, "selected": selected,
         "flags": [{
             "reason": flag.reason, "segment": flag.segment_id, "priority": flag.priority,

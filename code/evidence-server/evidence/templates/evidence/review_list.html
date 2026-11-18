@@ -10,15 +10,15 @@
 </form>
 <div class="card table-box">
   <table>
-    <thead><tr><th>考试</th><th>作答</th><th>来源</th><th>证据状态</th><th>创建时间</th></tr></thead>
+    <thead><tr><th>考试</th><th>作答</th><th>来源</th><th>证据状态</th><th>复核优先级</th><th>创建时间</th></tr></thead>
     <tbody>
       {% for session in sessions %}
       <tr>
         <td><a href="{% url 'review_detail' session.id %}">{{ session.exam.name }}</a></td>
         <td>{{ session.attempt }}</td><td>{{ session.source_site }}</td>
-        <td><span class="status">{{ session.get_state_display }}</span></td><td>{{ session.created_at|date:"Y-m-d H:i" }}</td>
+        <td><span class="status">{{ session.get_state_display }}</span></td><td>{{ session.priority }}</td><td>{{ session.created_at|date:"Y-m-d H:i" }}</td>
       </tr>
-      {% empty %}<tr><td colspan="5">没有可查看的作答。</td></tr>{% endfor %}
+      {% empty %}<tr><td colspan="6">没有可查看的作答。</td></tr>{% endfor %}
     </tbody>
   </table>
 </div>

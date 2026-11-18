@@ -19,6 +19,7 @@
     let retryTimer;
     let retryWait = 1000;
     let uploaded = 0;
+    let userPaused = false;
     let storageWarning = false;
     let dropped = false;
     let queue = [];
@@ -177,7 +178,7 @@
                 enqueue({key, sessionId: session.sessionId, startMs, endMs: stopMs, deviceAtMs,
                     createdAt: Date.now(), blob});
             }
-            if (!active && !inFlight.size && !queue.length && !dropped) {
+            if (userPaused && !active && !inFlight.size && !queue.length && !dropped) {
                 show("录制已暂停。本页已确认 " + uploaded + " 段。");
             }
         };
@@ -240,6 +241,7 @@
 
     async function begin() {
         if (active || start.disabled) return;
+        userPaused = false;
         start.disabled = true;
         decline.disabled = true;
         show("正在检查设备和证据服务…");
@@ -273,7 +275,7 @@
             recordSegment(type);
             stop.disabled = false;
             event("client_ready");
-            show("正在录制。音视频将分段保存。");
+            show("设备已连接，正在录制。等待首段保存确认。");
         } catch (error) {
             stopRecording();
             event(error.name === "NotAllowedError" ? "device_denied" : "device_failed");
@@ -285,6 +287,7 @@
 
     start.addEventListener("click", begin);
     stop.addEventListener("click", () => {
+        userPaused = true;
         selectionValue("paused");
         stopRecording();
         event("client_paused");

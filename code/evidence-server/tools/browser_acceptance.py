@@ -23,7 +23,7 @@ def run(args):
     from django.utils import timezone
 
     from evidence.models import PANEL, REVIEWER, Assignment, ReviewEntry, Session
-    from evidence.services import coverage, finalize
+    from evidence.services import coverage, elapsed, finalize
 
     users = get_user_model()
     secret = os.urandom(24).hex()
@@ -61,6 +61,9 @@ def run(args):
             const stream = document.querySelector('[data-eg-preview]').srcObject;
             return stream?.getAudioTracks().length === 1 && stream?.getVideoTracks().length === 1;
         }""")
+        if args.pre_roll:
+            page.wait_for_timeout(args.pre_roll * 1000)
+        window_start = orm(lambda: elapsed(Session.objects.get(source_site="standalone", attempt=attempt)))
         then = time.monotonic()
         offline_done = False
         next_report = 60
@@ -97,6 +100,10 @@ def run(args):
         session, segments, codes = orm(saved_evidence)
         assert len(segments) > 1 and len(saved) >= 1, (len(segments), errors)
         duration, covered, gaps = coverage(session, segments)
+        window_end = min(duration, window_start + args.seconds * 1000)
+        window_gaps = [max(0, min(b, window_end) - max(a, window_start)) for a, b in gaps]
+        window_duration = max(1, window_end - window_start)
+        window_coverage = 1 - sum(window_gaps) / window_duration
         if args.seconds >= 600 and not args.disrupt:
             assert duration >= 600000, duration
         if args.disrupt:
@@ -142,6 +149,9 @@ def run(args):
             "measuredAt": timezone.now().isoformat(), "browser": browser.version,
             "segments": len(segments), "durationMs": duration, "dualTrackCoverageMs": covered,
             "coveragePct": round(covered / duration * 100, 3), "maxGapMs": max((b-a for a, b in gaps), default=0),
+            "measurementStartMs": window_start, "measurementDurationMs": window_duration,
+            "measurementCoveragePct": round(window_coverage * 100, 3),
+            "measurementMaxGapMs": max(window_gaps, default=0),
             "fileBytes": sum(item.size for item in segments), "reviewedAndRevised": True,
             "rangePlayback": True, "unassignedAccessDenied": True, "networkAndPageChange": args.disrupt,
             "state": session.state, "sessionId": str(session.pk),
@@ -150,7 +160,7 @@ def run(args):
             Path(args.output).write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         print(json.dumps(report, ensure_ascii=False), flush=True)
         if args.seconds >= 600 and not args.disrupt:
-            assert covered / duration >= 0.99, (covered, duration, sorted(gaps, key=lambda gap: gap[1] - gap[0])[-5:])
+            assert window_duration >= 600000 and window_coverage >= 0.99 and max(window_gaps, default=0) <= 1000, report
         browser.close()
 
 
@@ -158,6 +168,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--base", default="http://127.0.0.1:8090")
     parser.add_argument("--seconds", type=int, default=18)
+    parser.add_argument("--pre-roll", type=int, default=0)
     parser.add_argument("--chromium")
     parser.add_argument("--disrupt", action="store_true")
     parser.add_argument("--native-fake", action="store_true")
