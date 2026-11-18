@@ -1,0 +1,58 @@
+Creating test database for alias 'default' ('test_exam_guardian_delivery')...
+
+Found 21 test(s).
+Operations to perform:
+  Synchronize unmigrated apps: messages, staticfiles
+  Apply all migrations: admin, auth, contenttypes, evidence, sessions
+Synchronizing apps without migrations:
+  Creating tables...
+    Running deferred SQL...
+Running migrations:
+  Applying contenttypes.0001_initial... OK
+  Applying auth.0001_initial... OK
+  Applying admin.0001_initial... OK
+  Applying admin.0002_logentry_remove_auto_add... OK
+  Applying admin.0003_logentry_add_action_flag_choices... OK
+  Applying contenttypes.0002_remove_content_type_name... OK
+  Applying auth.0002_alter_permission_name_max_length... OK
+  Applying auth.0003_alter_user_email_max_length... OK
+  Applying auth.0004_alter_user_username_opts... OK
+  Applying auth.0005_alter_user_last_login_null... OK
+  Applying auth.0006_require_contenttypes_0002... OK
+  Applying auth.0007_alter_validators_add_error_messages... OK
+  Applying auth.0008_alter_user_username_max_length... OK
+  Applying auth.0009_alter_user_last_name_max_length... OK
+  Applying auth.0010_alter_group_name_max_length... OK
+  Applying auth.0011_update_proxy_permissions... OK
+  Applying auth.0012_alter_user_first_name_max_length... OK
+  Applying evidence.0001_initial... OK
+test_admin_exam_form_assignment_and_readonly_audit (evidence.test_interfaces.InterfaceMatrix.test_admin_exam_form_assignment_and_readonly_audit) ... ok
+test_analysis_endpoint_permissions_tools_and_pending_deduplication (evidence.test_interfaces.InterfaceMatrix.test_analysis_endpoint_permissions_tools_and_pending_deduplication) ... ok
+test_demo_page_script_consent_and_exit (evidence.test_interfaces.InterfaceMatrix.test_demo_page_script_consent_and_exit) ... ok
+test_end_to_complete_and_grace_window (evidence.test_interfaces.InterfaceMatrix.test_end_to_complete_and_grace_window) ... ok
+test_evaluate_command_matches_labels_and_rejects_another_session (evidence.test_interfaces.InterfaceMatrix.test_evaluate_command_matches_labels_and_rejects_another_session) ... ok
+test_events_method_payload_replay_and_deadline (evidence.test_interfaces.InterfaceMatrix.test_events_method_payload_replay_and_deadline) ... ok
+test_integration_requests_and_disabled_exam (evidence.test_interfaces.InterfaceMatrix.test_integration_requests_and_disabled_exam) ... ok
+test_login_and_logout_csrf_session (evidence.test_interfaces.InterfaceMatrix.test_login_and_logout_csrf_session) ... ok
+test_media_full_suffix_missing_file_and_accel (evidence.test_interfaces.InterfaceMatrix.test_media_full_suffix_missing_file_and_accel) ... ok
+test_review_detail_method_note_fields_and_moodle_link (evidence.test_interfaces.InterfaceMatrix.test_review_detail_method_note_fields_and_moodle_link) ... ok
+test_review_list_filters_assignment_and_priority (evidence.test_interfaces.InterfaceMatrix.test_review_list_filters_assignment_and_priority) ... ok
+test_root_health_and_methods (evidence.test_interfaces.InterfaceMatrix.test_root_health_and_methods) ... ok
+test_segment_method_size_and_session_quota (evidence.test_interfaces.InterfaceMatrix.test_segment_method_size_and_session_quota) ... ok
+test_status_ready_and_service_unavailable (evidence.test_interfaces.InterfaceMatrix.test_status_ready_and_service_unavailable) ... ok
+test_analysis_haar_replay_and_expiry (evidence.tests.EvidenceAcceptance.test_analysis_haar_replay_and_expiry) ... ok
+test_consent_identity_and_credentials (evidence.tests.EvidenceAcceptance.test_consent_identity_and_credentials) ... ok
+test_demo_csrf_and_repeat_after_submit (evidence.tests.EvidenceAcceptance.test_demo_csrf_and_repeat_after_submit) ... ok
+test_end_gap_and_retry (evidence.tests.EvidenceAcceptance.test_end_gap_and_retry) ... ok
+test_interval_scoring_uses_each_prediction_once (evidence.tests.EvidenceAcceptance.test_interval_scoring_uses_each_prediction_once) ... ok
+test_review_range_and_saved_revision_panel (evidence.tests.EvidenceAcceptance.test_review_range_and_saved_revision_panel) ... ok
+test_upload_idempotency_integrity_and_overlap (evidence.tests.EvidenceAcceptance.test_upload_idempotency_integrity_and_overlap) ... ok
+
+----------------------------------------------------------------------
+Ran 21 tests in 10.962s
+
+OK
+Destroying test database for alias 'default' ('test_exam_guardian_delivery')...
+
+  Applying sessions.0001_initial... OK
+System check identified no issues (0 silenced).

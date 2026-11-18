@@ -1,0 +1,21 @@
+{
+  "source": "standalone, test-only canvas and Web Audio tracks",
+  "measuredAt": "2026-11-18T08:53:20.551907+00:00",
+  "browser": "143.0.7499.4",
+  "segments": 124,
+  "durationMs": 619122,
+  "dualTrackCoverageMs": 617780,
+  "coveragePct": 99.783,
+  "maxGapMs": 650,
+  "measurementStartMs": 15576,
+  "measurementDurationMs": 603000,
+  "measurementCoveragePct": 100.0,
+  "measurementMaxGapMs": 0,
+  "fileBytes": 10002067,
+  "reviewedAndRevised": true,
+  "rangePlayback": true,
+  "unassignedAccessDenied": true,
+  "networkAndPageChange": false,
+  "state": "complete",
+  "sessionId": "8c31f97b-4ef4-4994-8d8f-c4fe6581b48c"
+}

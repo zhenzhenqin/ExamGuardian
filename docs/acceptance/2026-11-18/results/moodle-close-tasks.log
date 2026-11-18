@@ -1,0 +1,27 @@
+Server Time: Wed, 18 Nov 2026 08:49:28 +0000
+
+Execute adhoc task: local_examguardianmedia\task\finish_session
+Adhoc task id: 20
+Adhoc task custom data: {"attemptId":15,"endedAt":1794991282}
+... started 08:49:28. Current memory use 13.0 MB.
+... used 0 dbqueries
+... used 0.076379060745239 seconds
+Adhoc task complete: local_examguardianmedia\task\finish_session
+Server Time: Wed, 18 Nov 2026 08:49:29 +0000
+
+Execute adhoc task: local_examguardianmedia\task\finish_session
+Adhoc task id: 21
+Adhoc task custom data: {"attemptId":16,"endedAt":1794991298}
+... started 08:49:29. Current memory use 13.0 MB.
+... used 0 dbqueries
+... used 0.078696012496948 seconds
+Adhoc task complete: local_examguardianmedia\task\finish_session
+Server Time: Wed, 18 Nov 2026 08:49:30 +0000
+
+Execute adhoc task: local_examguardianmedia\task\finish_session
+Adhoc task id: 22
+Adhoc task custom data: {"attemptId":17,"endedAt":1794991301}
+... started 08:49:30. Current memory use 13.0 MB.
+... used 0 dbqueries
+... used 0.049206018447876 seconds
+Adhoc task complete: local_examguardianmedia\task\finish_session

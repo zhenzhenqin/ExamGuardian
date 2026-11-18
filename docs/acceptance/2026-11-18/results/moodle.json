@@ -1,0 +1,19 @@
+{
+  "source": "Moodle lab quiz via Chromium with test-only synthetic tracks",
+  "browser": "143.0.7499.4",
+  "cmid": 8,
+  "quiz_id": 5,
+  "finished": [
+    "15",
+    "16",
+    "17"
+  ],
+  "clipAcknowledgements": [
+    4,
+    3
+  ],
+  "moodleCrossAccountDenied": true,
+  "declinedAttempt": "17",
+  "sessionMethodAnonymousCsrfAndFinishedChecked": true,
+  "proxyStatusAuthorization": true
+}

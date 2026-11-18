@@ -1,0 +1,73 @@
+{
+  "sessions": [
+    {
+      "attempt": "15",
+      "state": "incomplete",
+      "segments": 4,
+      "durationMs": 21419,
+      "coveragePct": 77.179,
+      "maxGapMs": 2288
+    },
+    {
+      "attempt": "16",
+      "state": "incomplete",
+      "segments": 3,
+      "durationMs": 14010,
+      "coveragePct": 81.335,
+      "maxGapMs": 2377
+    },
+    {
+      "attempt": "17",
+      "state": "declined",
+      "segments": 0,
+      "durationMs": 0,
+      "coveragePct": null,
+      "maxGapMs": 0
+    }
+  ],
+  "analysis": [
+    {
+      "id": 3,
+      "detector": "mediapipe",
+      "state": "done",
+      "observations": 8,
+      "flags": 2,
+      "priority": 2,
+      "versions": {
+        "mediapipe": "1.2.3",
+        "modelSha256": "b4578f35940bf5a1a655214a1cce5cab13eba73c1297cd78e1a04c2380b0152f",
+        "pyav": "19.0.2",
+        "webrtcvad": "2.0.14.post1",
+        "visionSampleMs": 500,
+        "vadFrameMs": 20,
+        "vadMode": 2
+      },
+      "error": ""
+    },
+    {
+      "id": 4,
+      "detector": "haar",
+      "state": "done",
+      "observations": 8,
+      "flags": 2,
+      "priority": 2,
+      "versions": {
+        "opencv": "4.13.0",
+        "model": "haarcascade_frontalface_default",
+        "modelSha256": "0f7d4527844eb514d4a4948e822da90fbb16a34a0bbbbc6adc6498747a5aafb0",
+        "pyav": "19.0.2",
+        "webrtcvad": "2.0.14.post1",
+        "visionSampleMs": 500,
+        "vadFrameMs": 20,
+        "vadMode": 2
+      },
+      "error": ""
+    }
+  ],
+  "rangeStatus": 206,
+  "rangeBytes": 32,
+  "moodleAnswerLink": true,
+  "reviewSaved": true,
+  "sebServerHttpStatus": 200,
+  "normalBrowserQuizGate": true
+}
